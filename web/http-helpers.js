@@ -58,7 +58,3 @@ exports.serveAssets = function(res, asset, callback) {
     }
   });
 };
-
-
-
-// As you progress, keep thinking about what helper functions you can put here!

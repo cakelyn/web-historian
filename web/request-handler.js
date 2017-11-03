@@ -61,9 +61,9 @@ var actions = {
     });
   },
 
-  'OPTIONS': function(req, res) {
-    helpers.sendResponse(res, null);
-  }
+  // 'OPTIONS': function(req, res) {
+  //   helpers.sendResponse(res, null);
+  // }
 
 };
 
