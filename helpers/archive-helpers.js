@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
-
+var request = require('request');
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
  * Consider using the `paths` object below to store frequently used file paths. This way,
@@ -28,43 +28,52 @@ exports.initialize = function(pathsObj) {
 
 exports.readListOfUrls = function(callback) {
   // should read URLs from sites.txt
+  // callback should trigger downloadURLS ***********
+
   fs.readFile(exports.paths.list, 'utf-8', function(err, data){
     if(err) {
       console.log('error', error);
     }
-    console.log(data);
     callback(data.split('\n'));
-
   });
 };
 
 exports.isUrlInList = function(url, callback) {
-  // should check if a URL is in the list
-  fs.readFile(exports.paths.list, function(err, data) {
-    if (err) {
-      console.log(err);
-    }
-    callback(data);
+  // should check if a URL is in the list, output should be boolean
+  exports.readListOfUrls(function(urlsList) {
+    // go through urls list
+    var found = _.any(urlsList, function(site, i) {
+      return site.match(url);
+    });
+    callback(found);
   });
 
-  // var urlList = exports.readListOfUrls(callback);
-  // if(urlList.includes(url)){
-  //   callback(true);
-  // }
-  // callback(false);
 };
 
 exports.addUrlToList = function(url, callback) {
-  // should add a URL to the list
-  fs.writeFile(exports.paths.list, url, function(err, data) {
-    console.log(data);
+  // if url is not in list, should add a URL to the list
+  fs.appendFile(exports.paths.list, url + '\n', function(err) {
+    if (err) {
+      console.log(err);
+    }
+    console.log(url, 'saved');
+    callback();
   });
 };
 
 exports.isUrlArchived = function(url, callback) {
   // should check if a URL is archived
+  // use exports.paths to check contents of sites folder
+  var sitePath = path.join(exports.paths.archivedSites, url);
+  fs.access(sitePath, function(err) {
+    callback(!err);
+  });
 };
 
 exports.downloadUrls = function(urls) {
-  // should download all pending URLs in the list
+
+  _.each(urls, function (url) {
+    if (!url) { return; }
+    request('http://' + url).pipe(fs.createWriteStream(exports.paths.archivedSites + '/' + url));
+  });
 };
