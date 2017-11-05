@@ -25,12 +25,11 @@ var actions = {
       // trim leading slash if present
       if (urlPath[0] === '/') { urlPath = urlPath.slice(1); }
 
-      archive.isUrlInList(urlPath, function(found) {
-        if (found) {
-          helpers.sendRedirect(res, '/loading.html');
-        } else {
-          helpers.send404(res);
-        }
+      archive.isUrlInList(urlPath)
+      .then(function() {
+        helpers.sendRedirect(res, '/loading.html');
+      }).catch(function() {
+        helpers.send404(res);
       });
     });
   },
@@ -38,25 +37,19 @@ var actions = {
   'POST': function(req, res) {
     // gets the URL
     helpers.collectUrl(req, function(url) {
-      // check if URL is in sites.txt
-      archive.isUrlInList(url, function(isThere) {
-        // if url is in list
-        if (isThere) {
-          // check if site is archived
-          archive.isUrlArchived(url, function(isArchived) {
-            if (isArchived) {  // redirect to site
-              helpers.sendRedirect(res, '/' + url);
-            } else {  // redirect to loading
-              helpers.sendRedirect(res, '/loading.html');
-            }
-          });
-        } else {  // url is not is list
-          // add url to list
-          archive.addUrlToList(url, function() {
-            // render loading page
-            helpers.sendRedirect(res, '/loading.html');
-          });
-        }
+      archive.isUrlInList(url)
+      .then(function(url) {
+        archive.isUrlArchived(url)
+        .then(function(url) {
+          helpers.sendRedirect(res, '/' + url);
+        }).catch(function(err) {
+          helpers.sendRedirect(res, '/loading.html');
+        });
+      }).catch(function() {
+        archive.addUrlToList(url)
+        .then(function(url) {
+          helpers.sendRedirect(res, '/loading.html');
+        });
       });
     });
   },

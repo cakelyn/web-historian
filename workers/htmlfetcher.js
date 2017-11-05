@@ -2,7 +2,8 @@
 // that are waiting.
 var archive = require('../helpers/archive-helpers');
 
-// check list for urls
-// download urls
 console.log('fetching html');
-archive.readListOfUrls(archive.downloadUrls);
+archive.readListOfUrls()
+.then(function(urls) {
+archive.downloadUrls(urls);
+});

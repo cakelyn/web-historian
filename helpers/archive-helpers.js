@@ -26,52 +26,66 @@ exports.initialize = function(pathsObj) {
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-exports.readListOfUrls = function(callback) {
+exports.readListOfUrls = function() {
   // should read URLs from sites.txt
   // callback should trigger downloadURLS ***********
-
-  fs.readFile(exports.paths.list, 'utf-8', function(err, data){
-    if(err) {
-      console.log('error', error);
-    }
-    callback(data.split('\n'));
-  });
-};
-
-exports.isUrlInList = function(url, callback) {
-  // should check if a URL is in the list, output should be boolean
-  exports.readListOfUrls(function(urlsList) {
-    // go through urls list
-    var found = _.any(urlsList, function(site, i) {
-      return site.match(url);
+  return new Promise(function(resolve, reject) {
+    fs.readFile(exports.paths.list, 'utf-8', function(err, data){
+      if(err) {
+        reject(err);
+      }
+      resolve(data.split('\n'));
     });
-    callback(found);
   });
-
 };
 
-exports.addUrlToList = function(url, callback) {
+exports.isUrlInList = function(url) {
+  // should check if a URL is in the list, output should be boolean
+  return new Promise(function(resolve, reject) {
+    exports.readListOfUrls()
+      // go through urls list
+      .then(function(urls) {
+        var found = _.any(urls, function(site, i) {
+          return site.match(url);
+        });
+        if (found) {
+          resolve(url);
+        } else {
+          reject();
+        }
+      });
+    });
+};
+
+exports.addUrlToList = function(url) {
   // if url is not in list, should add a URL to the list
-  fs.appendFile(exports.paths.list, url + '\n', function(err) {
-    if (err) {
-      console.log(err);
-    }
+  return new Promise(function(resolve, reject) {
+    fs.appendFile(exports.paths.list, url + '\n', function(err) {
+      if (err) {
+        reject(err);
+      }
+    });
     console.log(url, 'saved');
-    callback();
+    resolve(url);
   });
 };
 
-exports.isUrlArchived = function(url, callback) {
+exports.isUrlArchived = function(url) {
   // should check if a URL is archived
   // use exports.paths to check contents of sites folder
-  var sitePath = path.join(exports.paths.archivedSites, url);
-  fs.access(sitePath, function(err) {
-    callback(!err);
+  return new Promise(function(resolve, reject) {
+    var sitePath = path.join(exports.paths.archivedSites, url);
+    fs.access(sitePath, function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(url);
+      }
+    });
   });
 };
 
 exports.downloadUrls = function(urls) {
-
   _.each(urls, function (url) {
     if (!url) { return; }
     request('http://' + url).pipe(fs.createWriteStream(exports.paths.archivedSites + '/' + url));
